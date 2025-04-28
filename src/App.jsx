@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ReactFlow, useNodesState, useEdgesState, addEdge, Handle, Position } from '@xyflow/react';
+import { ReactFlow, useNodesState, useEdgesState, addEdge, Handle, Position, Background } from '@xyflow/react';
 import calculateGraph from './calculate';
 import Simulator from './simulator';
  
@@ -14,11 +14,14 @@ const ConstNode = ({data}) => {
 
   return (
     <>
-      <div>
-        <label htmlFor="number">Number: </label>
-        <input id="number" type="number" onChange={(e) => setValue(+e.target.value)} className="nodrag" value={value} />
+      <div style={{ backgroundColor: "Canvas", border: "1px solid CanvasText", padding: "0px 10px 10px 10px" }}>
+        <p> <u>Constant</u> </p>
+        <div>
+          <label htmlFor="number">Number: </label>
+          <input id="number" type="number" onChange={(e) => setValue(+e.target.value)} className="nodrag" value={value} />
+        </div>
+        <Handle type="source" position={Position.Right} />
       </div>
-      <Handle type="source" position={Position.Right} />
     </>
   )
 }
@@ -26,9 +29,9 @@ const ConstNode = ({data}) => {
 const SensorNode = ({data}) => {
   const { setConfig, gameState } = data;
   let sensorIds = [];
-  gameState.entities.forEach((x, i) => {
+  gameState.entities.forEach((x) => {
     if(x.type == 'sensor')
-      sensorIds.push(i);
+      sensorIds.push(x.id);
   });
 
   const [ value, setValue ] = useState(sensorIds[0]);
@@ -36,14 +39,17 @@ const SensorNode = ({data}) => {
 
   return (
     <>
-      <div>
-        <label htmlFor="sensor">Sensor: </label>
-        <select id="sensor" onChange={(e) => setValue(+e.target.value)} value={value}>
-          {sensorIds.map((j, i) => 
-            <option key={j} value={j}> Sensor {i+1} </option>)}
-        </select>
+      <div style={{ backgroundColor: "Canvas", border: "1px solid CanvasText", padding: "0px 10px 10px 10px" }}>
+        <p> <u> Sensor reading </u> </p>
+        <div>
+          <label htmlFor="sensor">Sensor: </label>
+          <select id="sensor" onChange={(e) => setValue(+e.target.value)} value={value}>
+            {sensorIds.map((j, i) => 
+              <option key={j} value={j}> Sensor {i+1} </option>)}
+          </select>
+        </div>
+        <Handle type="source" position={Position.Right} />
       </div>
-      <Handle type="source" position={Position.Right} />
     </>
   )
 }
@@ -51,27 +57,32 @@ const SensorNode = ({data}) => {
 const AddNode = () => {
   return (
     <>
-      <p> Additive node </p>
-      <Handle type="target" id="a" position={Position.Left} />
-      <Handle type="target" id="b" position={Position.Left} style={{top: 10}} />
-      <Handle type="source" position={Position.Right} />
+      <div style={{ backgroundColor: "Canvas", border: "1px solid CanvasText", padding: "5px 14px" }}>
+        <p> <u> Add numbers </u> </p>
+        <Handle type="target" id="a" position={Position.Left} style={{top: "25%"}}/>
+        <Handle type="target" id="b" position={Position.Left} style={{top: "75%"}} />
+        <Handle type="source" position={Position.Right} />
+      </div>
     </>
   );
 }
 
 const IfGreaterNode = ({data}) => {
   const { setConfig } = data;
-  const [ threshold, setThreshold ] = useState(0);
-  useEffect(() => setConfig({ threshold }), [threshold]);
+  const [ threshold, setThreshold ] = useState('0');
+  useEffect(() => setConfig({ threshold: +threshold }), [threshold]);
 
   return (
     <>
-      <Handle type="target" position={Position.Left} />
-      <div>
-        <label htmlFor="threshold"> Threshold: </label>
-        <input id="threshold" type="number" onChange={(e) => setThreshold(+e.target.value)} className="nodrag" value={threshold} />
+      <div style={{ backgroundColor: "Canvas", border: "1px solid CanvasText", padding: "0px 10px 10px 10px" }}>
+        <p style={{textAlign: "center"}}> <u> if &gt; x </u> </p>
+        <Handle type="target" position={Position.Left} />
+        <div>
+          <label htmlFor="threshold"> Threshold: </label>
+          <input id="threshold" type="number" onChange={(e) => setThreshold(e.target.value)} className="nodrag" value={threshold} />
+        </div>
+        <Handle type="source" position={Position.Right} />
       </div>
-      <Handle type="source" position={Position.Right} />
     </>
   )
 }
@@ -79,9 +90,9 @@ const IfGreaterNode = ({data}) => {
 const ControllerNode = ({data}) => {
   const { setConfig, gameState } = data;
   let controllerIds = [];
-  gameState.entities.forEach((x, i) => {
+  gameState.entities.forEach((x) => {
     if(x.type == 'controller')
-      controllerIds.push(i);
+      controllerIds.push(x.id);
   });
 
   const [ value, setValue ] = useState(controllerIds[0]);
@@ -89,13 +100,16 @@ const ControllerNode = ({data}) => {
 
   return (
     <>
-      <Handle type="target" position={Position.Left} />
-      <div>
-        <label htmlFor='controller'> Controller: </label>
-        <select id='controller' onChange={(e) => setValue(+e.target.value)} value={value}>
-          {controllerIds.map((j, i) =>
-            <option key={j} value={j}> Controller {i+1} </option>)}
-        </select>
+      <div style={{ backgroundColor: "Canvas", border: "1px solid CanvasText", padding: "0px 10px 10px 10px" }}>
+        <p style={{textAlign: "center"}}> <u> Activate controller </u> </p>
+        <Handle type="target" position={Position.Left} />
+        <div>
+          <label htmlFor='controller'> Controller: </label>
+          <select id='controller' onChange={(e) => setValue(+e.target.value)} value={value}>
+            {controllerIds.map((j, i) =>
+              <option key={j} value={j}> Controller {i+1} </option>)}
+          </select>
+        </div>
       </div>
     </>
   )
@@ -161,14 +175,16 @@ export default function App() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
-          />
+          >
+            <Background variant='dots' gap={12} size={1} />
+          </ReactFlow>
         </div>
         <div style={{ position: "absolute", left: "80vw", width: "20vw", height: "100vh", top: "0vh" }}>
           <button onClick={() => addNode('literal')}> Add number Input </button> <br/>
           <button onClick={() => addNode('sensor')}> Add sensor input </button> <br/>
           <button onClick={() => addNode('add')}> Add additive node </button> <br/>
           <button onClick={() => addNode('ifGreater')}> Add ifGreater node </button> <br/>
-          <button onClick={() => addNode('controller')}> Add output node </button> <br/>
+          <button onClick={() => addNode('controller')}> Add controller node </button> <br/>
           <br/>
           <button onClick={() => {
             // calculateGraph(nodeState.current, edgeState.current);
