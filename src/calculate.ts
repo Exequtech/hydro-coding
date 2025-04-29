@@ -1,9 +1,9 @@
 import { GameState, HeatPoint } from "./gameState";
 import Vec2 from "./Vec2";
 
-type NodeType = 'literal' | 'sensor' | 'add' | 'ifGreater' | 'controller';
+export type NodeType = 'literal' | 'sensor' | 'add' | 'ifGreater' | 'controller';
 
-interface NodeData {
+export interface NodeData {
   id: string;
   type: NodeType;
   config?: any;   // e.g., thresholds for ifGreater

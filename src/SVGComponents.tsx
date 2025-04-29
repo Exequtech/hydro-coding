@@ -2,8 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import Vec2 from "./Vec2";
 import { Lerp } from "./math.js";
 import { Noise } from "noisejs";
+import { Entity } from "./gameState";
 
-export function Grid({rows, columns, width, height, ...pathProps}) {
+type GridAndDim = {
+  rows: number
+  columns: number
+  width: number
+  height: number
+}
+
+type GridProps = GridAndDim & React.SVGProps<SVGPathElement>
+export function Grid({rows, columns, width, height, ...pathProps} : GridProps) {
   let d = '';
   for(let i = 0; i <= rows; i++) {
     const offset = i * height / rows;
@@ -18,7 +27,21 @@ export function Grid({rows, columns, width, height, ...pathProps}) {
   return (<path {...pathProps} d={d}/>);
 }
 
-export function TempDiagnostic({temps, width, height, rows, columns, colors=[{x: 16, r: 0, g: 0, b: 255}, {x: 21, r: 0, g: 255, b: 0}, {x: 26, r: 255, g: 0, b: 0}] , filter=null}) {
+type colorLerps = {x: number, r: number, g: number, b: number}[]
+
+type TempDiagnosticProps = GridAndDim & {
+  temps: number[][]
+  colors: colorLerps
+  filter: ((pos: Vec2, val: number) => boolean) | null
+}
+export function TempDiagnostic(
+  {
+    temps,
+    width, height, rows, columns,
+    colors=[{x: 16, r: 0, g: 0, b: 255}, {x: 21, r: 0, g: 255, b: 0}, {x: 26, r: 255, g: 0, b: 0}],
+    filter=null
+  } : TempDiagnosticProps)
+{
   return temps.map((row, i) => row.map((val, j) => {
     if(filter != null && !filter(new Vec2(j, i), val))
       return null;
@@ -37,18 +60,31 @@ export function TempDiagnostic({temps, width, height, rows, columns, colors=[{x:
   }))
 }
 
-export function TempDiagnosticCanvas({ temps, rows, columns, colors, filter, style }) {
-  const canvasRef = useRef(null);
-  const lerpPoints = {
+type TempDiagnosticCanvasProps = {
+  temps: number[][]
+  rows: number
+  columns: number
+  colors: colorLerps
+  filter: (pos: Vec2, val: number) => boolean
+  style: React.CSSProperties
+}
+export function TempDiagnosticCanvas({ temps, rows, columns, colors, filter, style }: TempDiagnosticCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lerpPoints: {[channel: string]: [number, number][]} = {
     r: colors.map(x => [x.x, x.r]),
     g: colors.map(x => [x.x, x.g]),
     b: colors.map(x => [x.x, x.b]),
   };
 
   useEffect(() => {
+    if(canvasRef.current === null)
+      return;
+
     const ctx = canvasRef.current.getContext("2d");
     // Don't need to clear rect, because entire image's data is pushed every frame (including empty pixels)
     // ctx.clearRect(0, 0, columns, rows);
+    if(ctx === null)
+      return;
 
     const imageData = ctx.createImageData(columns, rows);
     const data = imageData.data;
@@ -77,7 +113,8 @@ export function TempDiagnosticCanvas({ temps, rows, columns, colors, filter, sty
   return <canvas ref={canvasRef} width={columns} height={rows} style={style} />;
 }
 
-export function Entities({entities, width, height, rows, columns}) {
+type EntitiesProps = GridAndDim & {entities: Entity[]}
+export function Entities({entities, width, height, rows, columns}: EntitiesProps) {
   let defs = (
     <defs key={-1}>
       <symbol id='farm' viewBox='0 0 10 10'>
@@ -100,18 +137,28 @@ export function Entities({entities, width, height, rows, columns}) {
   }))];
 }
 
-export function WaterAnimation({simOffset, columns, rows, colors, sampleScale, style}) {
+type WaterAnimationProps = {
+  columns: number
+  rows: number
+  simOffset: Vec2
+  colors: colorLerps
+  sampleScale: Vec2
+  style: React.CSSProperties
+};
+export function WaterAnimation({simOffset, columns, rows, colors, sampleScale, style} : WaterAnimationProps) {
   const [noise, _] = useState(new Noise(Math.random()));
-  const canvasRef = useRef(null);
-  const lerpPoints = {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lerpPoints: {[channel: string]: [number, number][]} = {
     r: colors.map(x => [x.x, x.r]),
     g: colors.map(x => [x.x, x.g]),
     b: colors.map(x => [x.x, x.b]),
   };
 
   useEffect(() => {
+    if(canvasRef.current === null)
+      return;
     
-    const heights = [];
+    const heights: number[][] = [];
     for(let i = 0;i < rows; i++) {
       heights[i] = [];
       for(let j = 0;j < columns; j++) {
@@ -122,6 +169,8 @@ export function WaterAnimation({simOffset, columns, rows, colors, sampleScale, s
     }
 
     const ctx = canvasRef.current.getContext("2d");
+    if(ctx === null)
+      return;
     // Don't need to clear rect, because entire image's data is pushed every frame (including empty pixels)
     // ctx.clearRect(0, 0, columns, rows);
 

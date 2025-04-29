@@ -16,10 +16,11 @@ export type Entity = {
   },
 }
 
+export type HeatPointSource = 'random' | 'controller'
 export type HeatPoint = {
   pos: Vec2
-  strength?: number
-  source: string
+  strength: number
+  source: HeatPointSource
   vel: Vec2
 }
 
@@ -89,7 +90,7 @@ export function BaseGameState(targetFPS: number, rows: number, columns: number, 
   return ret;
 }
 
-export function GameStateLvl1(targetFPS: number, code: CodeGraph): GameState {
+export function GameStateLvl1(targetFPS: number, code?: CodeGraph): GameState {
   const rows = 10, columns = 10, simulationResolution = 10;
   let ret: GameState = BaseGameState(
     targetFPS, rows, columns, simulationResolution, [
@@ -103,6 +104,8 @@ export function GameStateLvl1(targetFPS: number, code: CodeGraph): GameState {
     Temps([18, 24],
           new Vec2(1, 1).Mult(0.05)),
     (state) => {
+      if(!code)
+        return state;
       return calculateGraph(code.nodes, code.edges, state);
     },
     FarmIncome(1 / targetFPS, 10 / targetFPS),

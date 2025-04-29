@@ -1,7 +1,8 @@
 import { Noise } from 'noisejs';
 import Vec2 from './Vec2';
+import { HeatPoint } from './gameState';
 
-export function BiLerp(grid, i, j) {
+export function BiLerp(grid: number[][], i: number, j: number): number {
   let i0 = Math.floor(i)
   let i1 = Math.min(i0+1, grid.length-1)
   let j0 = Math.floor(j)
@@ -16,28 +17,28 @@ export function BiLerp(grid, i, j) {
   return top * (1 - di) + bottom * di
 }
 
-export function Cycle(val, min, max) {
+export function Cycle(val: number, min: number, max: number): number {
   return (val + max - min) % (max - min) + min;
 }
 
 const noise = new Noise(Math.random());
-export function GetCurl(x, y, eps = 0.0001) {
+export function GetCurl(x: number, y: number, eps = 0.0001): Vec2 {
   const dx = (noise.perlin2(x + eps, y) - noise.perlin2(x - eps, y)) / (2 * eps);
   const dy = (noise.perlin2(x, y + eps) - noise.perlin2(x, y - eps)) / (2 * eps);
   return new Vec2(dx, dy);
 }
 
-export function ClientToSVGCoords(clientPos, windowViewport, svgViewbox) {
+export function ClientToSVGCoords(clientPos: Vec2, windowViewport: Vec2, svgViewbox: Vec2): Vec2 {
   return clientPos.Mult(svgViewbox.x/windowViewport.x, svgViewbox.y/windowViewport.y)
 }
 
-export function SVGToGameCoords(svgCoords,  svgViewbox) {
+export function SVGToGameCoords(svgCoords: Vec2,  svgViewbox: Vec2): Vec2 {
   const gameAnchor = svgViewbox.Mult(1/2).Sub(new Vec2(500, 500));
   return svgCoords.Sub(gameAnchor)
 }
 
 // Points: array of [min, val]
-export function Lerp(num, points) {
+export function Lerp(num: number, points: [number,number][]) {
   for(let i = 0;i < points.length; i++) {
     if(points[i][0] == num) {
       return points[i][1];
@@ -52,7 +53,7 @@ export function Lerp(num, points) {
   return points[points.length-1][1]
 }
 
-export function FullFreeze(object) {
+export function FullFreeze(object: object): void {
   Object.freeze(object);
   for(let key in object) {
     const val = object[key];
@@ -61,7 +62,7 @@ export function FullFreeze(object) {
   }
 }
 
-export function RayIntersectsBox(Origin, Direction, BoxMin, BoxMax) {
+export function RayIntersectsBox(Origin: Vec2, Direction: Vec2, BoxMin: Vec2, BoxMax: Vec2) {
   if((Direction.x == 0 && (Origin.x > BoxMax.x || Origin.x < BoxMin.x)) || (Direction.y == 0 && (Origin.y > BoxMax.y || Origin.y < BoxMin.y)))
     return false;
 
@@ -78,7 +79,7 @@ export function RayIntersectsBox(Origin, Direction, BoxMin, BoxMax) {
  * @param {HeatPoint} heatPoint
  * @param {number} minEffect
  */
-export function GetEffectiveRadius(heatPoint, minEffect, decayRate) {
+export function GetEffectiveRadius(heatPoint: HeatPoint, minEffect: number, decayRate: number) {
   switch(heatPoint.source) {
     case 'random':
       return -Math.log(minEffect / heatPoint.strength) / decayRate;
@@ -89,15 +90,15 @@ export function GetEffectiveRadius(heatPoint, minEffect, decayRate) {
   }
 }
 
-export function ApplyHeatpoints(heatPoints, coord, val, decayRate) {
-  const sorted = {};
+export function ApplyHeatpoints(heatPoints: HeatPoint[], coord: Vec2, val: number, decayRate: number) {
+  const sorted: {[source: string]: HeatPoint[]} = {};
   heatPoints.forEach(x => {
     if(!sorted[x.source]) sorted[x.source] = [];
     sorted[x.source].push(x);
   })
 
   let ret = val
-  if(sorted.random) sorted.random.forEach(x => {
+  if(sorted.random) sorted.random.forEach((x: HeatPoint) => {
     ret += x.strength * Math.exp(-x.pos.Sub(coord).Length() * decayRate);
   });
   if(sorted.controller) sorted.controller.forEach(x => {

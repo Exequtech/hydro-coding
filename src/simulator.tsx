@@ -1,13 +1,21 @@
 import './App.css';
 import { useState, useEffect, useRef } from "react";
 import Vec2 from './Vec2';
-import { Grid, Entities, TempDiagnosticCanvas, WaterAnimation } from './SVGComponents.jsx';
-import { FullFreeze } from './math.js';
-import { Clone } from './gameState';
+import { Grid, Entities, TempDiagnosticCanvas, WaterAnimation } from './SVGComponents';
+import { FullFreeze } from './math';
+import { Clone, GameState } from './gameState';
 
-export default function Simulator({rows, columns, simulationResolution = 10, targetFPS = 60, initialGameState, setGameScreen}) {
+export type SimulatorProps = {
+  rows: number
+  columns: number
+  initialGameState: GameState
+  setGameScreen: React.Dispatch<any>
+}
+export default function Simulator({rows, columns, initialGameState, setGameScreen}: SimulatorProps) {
   const [gameState, setGameState] = useState(initialGameState);
-  const containerRef = useRef(null);
+  const simulationResolution = gameState.simulationResolution;
+  const targetFPS = gameState.targetFPS;
+  const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState(Vec2.zero());
 
   useEffect(() => {
