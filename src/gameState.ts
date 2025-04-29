@@ -36,9 +36,7 @@ export type GameState = {
   simulations: Simulation[]
   coins: number
   score: number
-  action: string
   time: number
-  overlayState: {}
   code: {
     nodes: NodeState
     edges: Edge[]
@@ -64,9 +62,7 @@ export function BaseGameState(targetFPS: number, rows: number, columns: number, 
     simulations,
     coins: 0,
     score: 0,
-    action: "none",
     time: 0,
-    overlayState: {},
     code: {
       nodes: {},
       edges: [],
@@ -90,10 +86,9 @@ export function BaseGameState(targetFPS: number, rows: number, columns: number, 
   return ret;
 }
 
-export function GameStateLvl1(targetFPS: number, code?: CodeGraph): GameState {
+export function GameStateLvl1(targetFPS: number, real: boolean, code?: CodeGraph): GameState {
   const rows = 10, columns = 10, simulationResolution = 10;
-  let ret: GameState = BaseGameState(
-    targetFPS, rows, columns, simulationResolution, [
+  let baseSimulations: Simulation[] = [
     HeatPoints((_, state, maxStrength) => {
       return {
         pos: new Vec2(150, 50),
@@ -103,19 +98,27 @@ export function GameStateLvl1(targetFPS: number, code?: CodeGraph): GameState {
     }),
     Temps([18, 24],
           new Vec2(1, 1).Mult(0.05)),
+    FarmIncome(1 / targetFPS, 10 / targetFPS),
+  ];
+
+  let realSimulations: Simulation[] = [
+    GameOverCheck(),
     (state) => {
       if(!code)
         return state;
       return calculateGraph(code.nodes, code.edges, state);
     },
-    FarmIncome(1 / targetFPS, 10 / targetFPS),
-    GameOverCheck(),
     (state) => {
       if(state.score > 5000)
         return {...state, isGameOver: false, gameFinished: true};
       return state;
     },
-  ]);
+  ];
+
+  let simulations: Simulation[] = !real ? baseSimulations : [...baseSimulations, ...realSimulations];
+
+  let ret: GameState = BaseGameState(
+    targetFPS, rows, columns, simulationResolution, simulations);
 
   ret.entities = [
     {
@@ -160,9 +163,7 @@ export function Clone(state: GameState): GameState {
     simulations: state.simulations,
     coins: state.coins,
     score: state.score,
-    action: state.action,
     time: state.time,
-    overlayState: state.overlayState,
     code: {
       nodes: {...state.code.nodes},
       edges: [...state.code.edges],

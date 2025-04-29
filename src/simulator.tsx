@@ -6,17 +6,18 @@ import { FullFreeze } from './math';
 import { Clone, GameState } from './gameState';
 
 export type SimulatorProps = {
-  rows: number
-  columns: number
   initialGameState: GameState
   setGameScreen: React.Dispatch<any>
 }
-export default function Simulator({rows, columns, initialGameState, setGameScreen}: SimulatorProps) {
+export default function Simulator({initialGameState, setGameScreen}: SimulatorProps) {
   const [gameState, setGameState] = useState(initialGameState);
-  const simulationResolution = gameState.simulationResolution;
-  const targetFPS = gameState.targetFPS;
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState(Vec2.zero());
+
+  const simulationResolution = gameState.simulationResolution;
+  const targetFPS = gameState.targetFPS;
+  const rows = gameState.rows;
+  const columns = gameState.columns;
 
   useEffect(() => {
     const handleResize = () => {
@@ -100,6 +101,11 @@ export default function Simulator({rows, columns, initialGameState, setGameScree
           <rect width={svgViewport.x} height={svgViewport.y} fill="lightblue"/>
         </svg>
         <WaterAnimation simOffset={gameState.simOffset} columns={columns*simulationResolution} rows={rows*simulationResolution} colors={[{x:0,r:100,g:100,b:100},{x:1,r:3,g:232,b:252}]} sampleScale={new Vec2(1,1).Mult(0.4)} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}}/>
+        <TempDiagnosticCanvas temps={gameState.temp} rows={rows * simulationResolution} columns={columns*simulationResolution} colors={[{x:16,r:0,g:0,b:255},{x:21,r:0,g:255,b:0},{x:26,r:255,g:0,b:0}]} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}} filter={(pos, _) => {
+          const gameCoords = pos.Mult(1/simulationResolution).Floor();
+          // Uncomment for full temp diagnostic
+          return gameState.entities.some(x => x.pos.Equals(gameCoords) && x.type == 'sensor');
+        }}/>
         <svg
           style={{ position: "absolute", width: "100%", height: "100%", touchAction: "none"}}
           viewBox={`0 0 ${svgViewport.x} ${svgViewport.y}`}>
@@ -112,11 +118,6 @@ export default function Simulator({rows, columns, initialGameState, setGameScree
             <Entities entities={gameState.entities} width={1000} height={1000} rows={rows} columns={columns}/>           
           </g>
         </svg>
-        <TempDiagnosticCanvas temps={gameState.temp} rows={rows * simulationResolution} columns={columns*simulationResolution} colors={[{x:16,r:0,g:0,b:255},{x:21,r:0,g:255,b:0},{x:26,r:255,g:0,b:0}]} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}} filter={(pos, _) => {
-          const gameCoords = pos.Mult(1/simulationResolution).Floor();
-          // Uncomment for full temp diagnostic
-          return gameState.entities.some(x => x.pos.Equals(gameCoords) && x.type == 'sensor');
-        }}/>
         <svg
           style={{ position: "absolute", width: "100%", height: "100%", touchAction: "none"}}
           viewBox={`0 0 ${svgViewport.x} ${svgViewport.y}`}>

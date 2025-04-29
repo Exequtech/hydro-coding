@@ -29,6 +29,50 @@ interface CalcContext {
   [id: string]: any;
 }
 
+type NodeSignal = {
+  value: any
+  nodeId: string
+}
+
+function deepEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+
+  if (typeof a !== typeof b || a == null || b == null) return false;
+
+  if (typeof a === 'object') {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return false;
+
+    for (const key of keysA) {
+      if (!deepEqual(a[key], b[key])) return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+export function applyGraph(nodes: NodeState, edges: Edge[], gameState: GameState, timeout: number = 200): GameState {
+  let priorSignals: NodeSignal[] = [];
+  let signals: NodeSignal[] = [];
+  for(const nodeId in nodes) {
+    if(nodes[nodeId].type == 'literal') {
+      edges.filter(x => x.from == nodeId).forEach(x => signals.push({
+        value: nodes[nodeId].config.value,
+        nodeId: x.to,
+      }));
+    }
+  }
+
+  do {
+
+  } while(!deepEqual(priorSignals, signals));
+
+  return gameState;
+}
+
 export default function calculateGraph(nodes: NodeState, edges: Edge[], gameState: GameState): GameState {
   const context: CalcContext = {};
 

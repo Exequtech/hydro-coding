@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { ReactFlow, addEdge, Background, OnNodesChange, applyNodeChanges, Node, Edge, OnEdgesChange, applyEdgeChanges, Connection, BackgroundVariant } from '@xyflow/react';
 import Simulator from './simulator';
+import './execTest';
  
 import '@xyflow/react/dist/style.css';
 import './App.css';
@@ -23,13 +24,12 @@ export default function App() {
     [setEdges]
   );
 
-  const gameState = GameStateLvl1(1);
+  const gameState = GameStateLvl1(1, false);
  
   const addNode = useCallback((type: NodeType) =>
     
-    setNodes(nodes => {
-      const sorted = nodes.sort((a, b) => +a.id - +b.id);
-      const id = (sorted.length == 0) ? '1' : `${+sorted[sorted.length - 1].id + 1}`;
+    setNodes((nodes: Node[]): Node[] => {
+      const id = nodes.reduce((a: number, b): number => a > +b.id ? a : +b.id, 1) + 1 + ''
       nodeState.current[id] = {
         id,
         type,
@@ -41,7 +41,7 @@ export default function App() {
       }
       const getConfig = () => nodeState.current[id].config;
 
-      return [...sorted, {
+      return [...nodes, {
         id,
         position: { x: 0, y: 0 },
         type,
@@ -68,7 +68,7 @@ export default function App() {
   if(gameScreen == "programming") {
     return (
       <>
-        <div style={{ width: '80vw', height: '100vh' }}>
+        <div style={{ width: '40vw', height: '100vh' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -80,7 +80,7 @@ export default function App() {
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
         </div>
-        <div style={{ position: "absolute", left: "80vw", width: "20vw", height: "100vh", top: "0vh" }}>
+        <div style={{ position: "absolute", left: "40vw", width: "10vw", height: "100vh", top: "0vh" }}>
           <button onClick={() => addNode('literal')}> Add number Input </button> <br/>
           <button onClick={() => addNode('sensor')}> Add sensor input </button> <br/>
           <button onClick={() => addNode('add')}> Add additive node </button> <br/>
@@ -92,11 +92,17 @@ export default function App() {
             setGameScreen("simulation");
           }}> Calculate </button>
         </div>
+        <div style={{ position: "absolute", left: "50vw", width: "50vw", height: "100vh", top: "0vh" }}>
+          <Simulator initialGameState={GameStateLvl1(12, false)} setGameScreen={setGameScreen}/>
+        </div>
       </>
     );
   } else {
     return (
-      <Simulator rows={10} columns={10} initialGameState={GameStateLvl1(12, {nodes:nodeState.current, edges:edgeState.current})} setGameScreen={setGameScreen}/>
+      <>
+        <Simulator initialGameState={GameStateLvl1(12, true, {nodes:nodeState.current, edges:edgeState.current})} setGameScreen={setGameScreen}/>
+        <button style={{ position: "absolute", right: "40px", bottom: "40px" }} onClick={() => setGameScreen("programming")}> Back </button>
+      </>
     );
   }
 }
