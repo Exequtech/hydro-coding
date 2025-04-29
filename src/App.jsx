@@ -8,9 +8,10 @@ import './App.css';
 import { GameStateLvl1 } from './gameState';
 
 const ConstNode = ({data}) => {
-  const { setConfig } = data;
-  const [ value, setValue ] = useState(0);
-  useEffect(() => setConfig({ value }), [value]);
+  const { setConfig, getConfig } = data;
+  const initialValue = getConfig().value ?? 0;
+  const [ value, setValue ] = useState(initialValue);
+  useEffect(() => setConfig({ value: +value }), [value]);
 
   return (
     <>
@@ -18,7 +19,7 @@ const ConstNode = ({data}) => {
         <p> <u>Constant</u> </p>
         <div>
           <label htmlFor="number">Number: </label>
-          <input id="number" type="number" onChange={(e) => setValue(+e.target.value)} className="nodrag" value={value} />
+          <input id="number" type="number" onChange={(e) => setValue(e.target.value)} className="nodrag" value={value} />
         </div>
         <Handle type="source" position={Position.Right} />
       </div>
@@ -27,14 +28,15 @@ const ConstNode = ({data}) => {
 }
 
 const SensorNode = ({data}) => {
-  const { setConfig, gameState } = data;
+  const { setConfig, gameState, getConfig } = data;
   let sensorIds = [];
   gameState.entities.forEach((x) => {
     if(x.type == 'sensor')
       sensorIds.push(x.id);
   });
 
-  const [ value, setValue ] = useState(sensorIds[0]);
+  const initialValue = getConfig().value ?? sensorIds[0];
+  const [ value, setValue ] = useState(initialValue);
   useEffect(() => setConfig({ value }), [value]);
 
   return (
@@ -68,8 +70,9 @@ const AddNode = () => {
 }
 
 const IfGreaterNode = ({data}) => {
-  const { setConfig } = data;
-  const [ threshold, setThreshold ] = useState('0');
+  const { setConfig, getConfig } = data;
+  const initialValue = getConfig().threshold ?? '0';
+  const [ threshold, setThreshold ] = useState(initialValue);
   useEffect(() => setConfig({ threshold: +threshold }), [threshold]);
 
   return (
@@ -88,14 +91,14 @@ const IfGreaterNode = ({data}) => {
 }
 
 const ControllerNode = ({data}) => {
-  const { setConfig, gameState } = data;
+  const { setConfig, gameState, getConfig } = data;
   let controllerIds = [];
   gameState.entities.forEach((x) => {
     if(x.type == 'controller')
       controllerIds.push(x.id);
   });
 
-  const [ value, setValue ] = useState(controllerIds[0]);
+  const [ value, setValue ] = useState(getConfig().value ?? controllerIds[0]);
   useEffect(() => setConfig({ value }), [value]);
 
   return (
@@ -139,12 +142,13 @@ export default function App() {
       const setConfig = (config) => {
         nodeState.current[id].config = config;
       }
+      const getConfig = () => nodeState.current[id].config;
 
       return [...sorted, {
         id,
         position: { x: 0, y: 0 },
         type,
-        data: { setConfig, gameState }
+        data: { setConfig, gameState, getConfig }
       }];
     }), [setNodes])
 
