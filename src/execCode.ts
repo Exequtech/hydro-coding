@@ -7,22 +7,27 @@ export enum NodeType {
   Add = 'add',
   IfGreater = 'ifGreater',
   Controller = 'controller',
+};
+
+export type CodeGraph = {
+  nodes: {[id: string]: NodeData}
+  edges: EdgeData[]
 }
 
-type NodeData = {
+export type NodeData = {
   id: string
   type: NodeType
   config: {[val:string]:any}
   inputHandles: string[]
   outputHandles: string[]
-}
+};
 
-type EdgeData = {
+export type EdgeData = {
   from: string
   to: string
   fromHandle: string
   toHandle: string
-}
+};
 
 type NodeSignal = {
   from: string
@@ -30,7 +35,7 @@ type NodeSignal = {
   fromHandle: string
   toHandle: string
   value: any
-}
+};
 
 function deepEqual(a: any, b: any): boolean {
   if (a === b) return true;
@@ -66,8 +71,6 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
         throw new Error(`Sensor id ${node.config.value} does not have a set 'radius'. (Radius: ${sensor.data.radius}`);
 
       const pos: Vec2 = sensor.pos.Add(new Vec2(0.5, 0.5)).Mult(gameState.simulationResolution).Floor();
-
-      gameState.temp[pos.y][pos.x] = 20;
       
       let max = -Infinity
       for(let i = 0; i < gameState.temp.length; i++)
@@ -88,7 +91,7 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
   const start = Date.now();
   let timedout: boolean = false;
   while(!timedout) {
-    console.log('before literal spawning: ', [...signals]);
+    // console.log('before literal spawning: ', [...signals]);
     // Make sure const nodes always have a sending output
     for(const nodeId in nodes) {
       if(nodes[nodeId].type == NodeType.Literal) {
@@ -107,7 +110,7 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
         });
       }
     }
-    console.log('after literal spawning: ', [...signals]);
+    // console.log('after literal spawning: ', [...signals]);
     if(deepEqual(signals, priorSignals))
       break;
     priorSignals = signals;
@@ -145,7 +148,7 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
         case NodeType.Add:
           if(hasOutgoing(node.outputHandles[0]))
           {
-            console.log('sending add output');
+            // console.log('sending add output');
             sendOutput(incomingSignals.reduce((a,b) => a+b.value, 0), node.outputHandles[0]);
           }
           else
@@ -198,7 +201,7 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
     }
     timedout = Date.now() - start >= timeout
     signals = nextSignals;
-    console.log('after propagation: ', [...signals]);
+    // console.log('after propagation: ', [...signals]);
   }
 
   return next;

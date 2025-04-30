@@ -1,4 +1,4 @@
-import calculateGraph, { CodeGraph, Edge, NodeState } from "./calculate";
+import ApplyGraph, { CodeGraph, NodeData, EdgeData } from "./execCode";
 import { GameOverCheck } from "./simulation";
 import { FarmIncome } from "./simulation";
 import { Temps } from "./simulation";
@@ -37,10 +37,6 @@ export type GameState = {
   coins: number
   score: number
   time: number
-  code: {
-    nodes: NodeState
-    edges: Edge[]
-  }
 
   // Originally meta-variables:
   targetFPS: number
@@ -63,10 +59,6 @@ export function BaseGameState(targetFPS: number, rows: number, columns: number, 
     coins: 0,
     score: 0,
     time: 0,
-    code: {
-      nodes: {},
-      edges: [],
-    },
 
     targetFPS,
     rows,
@@ -106,7 +98,7 @@ export function GameStateLvl1(targetFPS: number, real: boolean, code?: CodeGraph
     (state) => {
       if(!code)
         return state;
-      return calculateGraph(code.nodes, code.edges, state);
+      return ApplyGraph(code.nodes, code.edges, state);
     },
     (state) => {
       if(state.score > 5000)
@@ -147,6 +139,7 @@ export function GameStateLvl1(targetFPS: number, real: boolean, code?: CodeGraph
   return ret;
 }
 
+// Deep cloning function
 export function Clone(state: GameState): GameState {
   let ret : GameState = {
     entities: [...state.entities],
@@ -164,10 +157,6 @@ export function Clone(state: GameState): GameState {
     coins: state.coins,
     score: state.score,
     time: state.time,
-    code: {
-      nodes: {...state.code.nodes},
-      edges: [...state.code.edges],
-    },
 
     targetFPS: state.targetFPS,
     rows: state.rows,

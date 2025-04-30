@@ -1,17 +1,16 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { ReactFlow, addEdge, Background, OnNodesChange, applyNodeChanges, Node, Edge, OnEdgesChange, applyEdgeChanges, Connection, BackgroundVariant } from '@xyflow/react';
 import Simulator from './simulator';
-import './execTest';
  
 import '@xyflow/react/dist/style.css';
 import './App.css';
 import { GameStateLvl1 } from './gameState';
 import { nodeTypes } from './nodeTypes';
-import { NodeState, NodeType } from './calculate';
+import { EdgeData, NodeData, NodeType } from './execCode';
 
 export default function App() {
-  const nodeState = useRef<NodeState>({})
-  const edgeState = useRef<{from: string, to: string}[]>([])
+  const nodeState = useRef<{[id: string]: NodeData}>({})
+  const edgeState = useRef<EdgeData[]>([])
   const [gameScreen, setGameScreen] = useState("programming")
   const [nodes, setNodes] = useState<Node[]>([]);
   const onNodesChange: OnNodesChange = useCallback(
@@ -33,8 +32,14 @@ export default function App() {
       nodeState.current[id] = {
         id,
         type,
-        config: {}
+        config: {},
+        inputHandles: [],
+        outputHandles: ['out'],
       };
+      if(type === NodeType.Controller)
+        nodeState.current[id].inputHandles = ['in'];
+      else if([NodeType.Add, NodeType.IfGreater].includes(type))
+        nodeState.current[id].inputHandles = ['a', 'b'];
 
       const setConfig = (config: any) => {
         nodeState.current[id].config = config;
@@ -51,7 +56,12 @@ export default function App() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      edgeState.current.push({from: connection.source, to: connection.target});
+      edgeState.current.push({
+        from: connection.source,
+        to: connection.target,
+        fromHandle: connection.sourceHandle ?? '',
+        toHandle: connection.targetHandle ?? '',
+      });
       setEdges((eds) => addEdge(connection, eds));
     },
     [setEdges],
@@ -81,11 +91,11 @@ export default function App() {
           </ReactFlow>
         </div>
         <div style={{ position: "absolute", left: "40vw", width: "10vw", height: "100vh", top: "0vh" }}>
-          <button onClick={() => addNode('literal')}> Add number Input </button> <br/>
-          <button onClick={() => addNode('sensor')}> Add sensor input </button> <br/>
-          <button onClick={() => addNode('add')}> Add additive node </button> <br/>
-          <button onClick={() => addNode('ifGreater')}> Add ifGreater node </button> <br/>
-          <button onClick={() => addNode('controller')}> Add controller node </button> <br/>
+          <button onClick={() => addNode(NodeType.Literal)}> Add number Input </button> <br/>
+          <button onClick={() => addNode(NodeType.Sensor)}> Add sensor input </button> <br/>
+          <button onClick={() => addNode(NodeType.Add)}> Add additive node </button> <br/>
+          <button onClick={() => addNode(NodeType.IfGreater)}> Add ifGreater node </button> <br/>
+          <button onClick={() => addNode(NodeType.Controller)}> Add controller node </button> <br/>
           <br/>
           <button onClick={() => {
             // calculateGraph(nodeState.current, edgeState.current);
