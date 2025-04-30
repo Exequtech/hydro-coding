@@ -9,8 +9,8 @@ export function FarmIncome(coinRate: number, scoreRate: number): Simulation {
     const activeControllers = prev.heatPoints.filter(e => e.source == 'controller');
     return {
       ...prev,
-      coins: prev.coins + (farms.length - activeControllers.length - 0.1) * coinRate,
-      score: prev.score + (farms.length - activeControllers.length - 0.1) * scoreRate,
+      coins: prev.coins + (farms.length - activeControllers.length) * coinRate,
+      score: prev.score + (farms.length - activeControllers.length) * scoreRate,
     };
   }
 }
@@ -141,6 +141,9 @@ export function GameOverCheck(): Simulation {
   return (prev: GameState): GameState => {
     if(prev.coins < 0)
       return {...prev, isGameOver: true, gameFinished: true};
+    if(prev.coins >= prev.targetScore)
+      return {...prev, isGameOver: false, gameFinished: true};
+
     const simResolution = prev.simulationResolution;
     for(let i = 0;i < prev.temp.length; i++) {
       for(let j = 0;j < prev.temp[i].length; j++) {

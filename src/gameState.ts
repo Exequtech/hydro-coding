@@ -45,9 +45,10 @@ export type GameState = {
   simulationResolution: number
   isGameOver: boolean
   gameFinished: boolean
+  targetScore: number
 }
 
-export function BaseGameState(targetFPS: number, rows: number, columns: number, simulationResolution: number, simulations: Simulation[], isGameOver = false): GameState {
+export function BaseGameState(targetFPS: number, rows: number, columns: number, simulationResolution: number, simulations: Simulation[], targetScore = 0, isGameOver = false): GameState {
   let ret: GameState = {
     entities: [],
     wind: Vec2.zero(),
@@ -66,6 +67,7 @@ export function BaseGameState(targetFPS: number, rows: number, columns: number, 
     simulationResolution,
     isGameOver,
     gameFinished: isGameOver,
+    targetScore
   }
 
   for(let i = 0;i < rows * simulationResolution; i++) {
@@ -87,30 +89,33 @@ export function GameStateLvl1(targetFPS: number, real: boolean, code?: CodeGraph
         strength: Math.random() * maxStrength,
         vel: state.wind,
       };
-    }),
+    }, 1/100),
     Temps([18, 24],
           new Vec2(1, 1).Mult(0.05)),
     FarmIncome(1 / targetFPS, 10 / targetFPS),
   ];
 
   let realSimulations: Simulation[] = [
-    GameOverCheck(),
+    (state) => {
+      return {...state, coins: state.coins - 0.1 / targetFPS, score: state.score - 1 / targetFPS};
+    },
     (state) => {
       if(!code)
         return state;
       return ApplyGraph(code.nodes, code.edges, state);
     },
     (state) => {
-      if(state.score > 5000)
+      if(state.score > 200)
         return {...state, isGameOver: false, gameFinished: true};
       return state;
     },
+    GameOverCheck(),
   ];
 
   let simulations: Simulation[] = !real ? baseSimulations : [...baseSimulations, ...realSimulations];
 
   let ret: GameState = BaseGameState(
-    targetFPS, rows, columns, simulationResolution, simulations);
+    targetFPS, rows, columns, simulationResolution, simulations, 200);
 
   ret.entities = [
     {
@@ -134,7 +139,14 @@ export function GameStateLvl1(targetFPS: number, real: boolean, code?: CodeGraph
       data: {},
     }
   ];
-  ret.wind = new Vec2(-10, 0).Div(targetFPS)
+  ret.wind = new Vec2(-20, 0).Div(targetFPS)
+
+  ret.heatPoints = [{
+    source: 'random',
+    pos: new Vec2(150, 50),
+    strength: 20,
+    vel: ret.wind,
+  }];
 
   return ret;
 }
@@ -164,6 +176,7 @@ export function Clone(state: GameState): GameState {
     simulationResolution: state.simulationResolution,
     isGameOver: state.isGameOver,
     gameFinished: state.gameFinished,
+    targetScore: state.targetScore,
   }
 
   return ret;

@@ -74,7 +74,7 @@ export const IfGreaterNode = () => {
   return (
     <>
       <div style={{ backgroundColor: "Canvas", border: "1px solid CanvasText", padding: "0px 10px 10px 10px" }}>
-        <p style={{textAlign: "center"}}> <u> if &gt; x </u> </p>
+        <p style={{textAlign: "center", padding: "0em 1em"}}> a <br/> &gt; <br/> b </p>
         <Handle type="target" id="a" position={Position.Left} style={{top: "25%"}} />
         <Handle type="target" id="b" position={Position.Left} style={{top: "75%"}} />
         <Handle type="source" id="out" position={Position.Right} />

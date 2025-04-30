@@ -100,10 +100,10 @@ export default function Simulator({initialGameState, setGameScreen}: SimulatorPr
           viewBox={`0 0 ${svgViewport.x} ${svgViewport.y}`}>
           <rect width={svgViewport.x} height={svgViewport.y} fill="lightblue"/>
         </svg>
+        <p style={{ position: "absolute", top: "1%", right: "1%", backgroundColor: "Canvas", border: "1px solid CanvasText", borderRadius:3, padding: "5px 10px" }}> Score: {gameState.score.toFixed(2)} / {gameState.targetScore} <br/> Coins: {gameState.coins.toFixed(2)} </p>
         <WaterAnimation simOffset={gameState.simOffset} columns={columns*simulationResolution} rows={rows*simulationResolution} colors={[{x:0,r:100,g:100,b:100},{x:1,r:3,g:232,b:252}]} sampleScale={new Vec2(1,1).Mult(0.4)} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}}/>
         <TempDiagnosticCanvas temps={gameState.temp} rows={rows * simulationResolution} columns={columns*simulationResolution} colors={[{x:16,r:0,g:0,b:255},{x:21,r:0,g:255,b:0},{x:26,r:255,g:0,b:0}]} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}} filter={(pos, _) => {
           const gameCoords = pos.Mult(1/simulationResolution).Floor();
-          // Uncomment for full temp diagnostic
           return gameState.entities.some(x => x.pos.Equals(gameCoords) && x.type == 'sensor');
         }}/>
         <svg
@@ -122,7 +122,7 @@ export default function Simulator({initialGameState, setGameScreen}: SimulatorPr
           style={{ position: "absolute", width: "100%", height: "100%", touchAction: "none"}}
           viewBox={`0 0 ${svgViewport.x} ${svgViewport.y}`}>
           <g transform={`translate(${svgGameAnchor.x}, ${svgGameAnchor.y})`}>
-            <Grid stroke='black' fill='none' rows={10} columns={10} width={1000} height={1000}/>
+            <Grid stroke='black' fill='none' rows={rows} columns={columns} width={1000} height={1000}/>
           </g>
         </svg>
       </div>

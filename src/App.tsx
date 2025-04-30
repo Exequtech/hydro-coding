@@ -1,5 +1,6 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useRef, useState } from 'react';
 import { ReactFlow, addEdge, Background, OnNodesChange, applyNodeChanges, Node, Edge, OnEdgesChange, applyEdgeChanges, Connection, BackgroundVariant } from '@xyflow/react';
+import { CodeGraph } from './execCode';
 import Simulator from './simulator';
  
 import '@xyflow/react/dist/style.css';
@@ -11,19 +12,26 @@ import { EdgeData, NodeData, NodeType } from './execCode';
 export default function App() {
   const nodeState = useRef<{[id: string]: NodeData}>({})
   const edgeState = useRef<EdgeData[]>([])
-  const [gameScreen, setGameScreen] = useState("programming")
+  const [gameScreen, setGameScreen] = useState("level_select")
   const [nodes, setNodes] = useState<Node[]>([]);
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((eds) => applyNodeChanges(changes, eds)),
     [setNodes]
   );
+  const [completedLevels, setCompletedLevels] = useState<{[levelnum: number]: boolean}>({});
+  let [level, setLevel] = useState(0);
   const [edges, setEdges] = useState<Edge[]>([]);
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     [setEdges]
   );
+  
+  const levels = [
+    (real: boolean, code?: CodeGraph) => GameStateLvl1(12, real, code),
+  ];
 
-  const gameState = GameStateLvl1(1, false);
+  const previewGameState = levels[level](false);
+  const realGameState = levels[level](true, {nodes: nodeState.current, edges: edgeState.current});
  
   const addNode = useCallback((type: NodeType) =>
     
@@ -50,7 +58,7 @@ export default function App() {
         id,
         position: { x: 0, y: 0 },
         type,
-        data: { setConfig, gameState, getConfig }
+        data: { setConfig, gameState: previewGameState, getConfig }
       }];
     }), [setNodes])
 
@@ -72,8 +80,38 @@ export default function App() {
     setGameScreen("programming");
   }
   if(gameScreen == "game_won") {
+    setCompletedLevels(x => {
+      return {...x, [level]: true};
+    });
     alert("Yay, you won!");
-    setGameScreen("programming");
+    setGameScreen("level_select");
+  }
+  if(gameScreen == "level_select") {
+    return (
+      <>
+        <div style={{ position: 'absolute', left: '10%', top: '10%', width: '80%', height: '80%', backgroundColor: 'Canvas', border: "1px solid CanvasText" }}>
+          <h1 style={{margin: '20px 20px'}}> Select a level </h1>
+          <div style={{ display: 'flex', margin: '20px 20px' }}>
+            {(() => {
+              let ret: ReactNode[] = [];
+              for(let i = 0;i < levels.length; i++) {
+                let disabled = true;
+                if(i === 0)
+                  disabled = false;
+                else
+                  disabled = completedLevels[i-1] ?? true;
+                ret.push(<button onClick={() => {
+                  setGameScreen("programming");
+                  setLevel(i);
+                }} key={i} disabled={disabled} style={{background: 'ButtonFace'}}> {i+1} </button>);
+              }
+
+              return ret;
+            })()}
+          </div>
+        </div>
+      </>
+    );
   }
   if(gameScreen == "programming") {
     return (
@@ -103,14 +141,14 @@ export default function App() {
           }}> Calculate </button>
         </div>
         <div style={{ position: "absolute", left: "50vw", width: "50vw", height: "100vh", top: "0vh" }}>
-          <Simulator initialGameState={GameStateLvl1(12, false)} setGameScreen={setGameScreen}/>
+          <Simulator initialGameState={previewGameState} setGameScreen={setGameScreen}/>
         </div>
       </>
     );
   } else {
     return (
       <>
-        <Simulator initialGameState={GameStateLvl1(12, true, {nodes:nodeState.current, edges:edgeState.current})} setGameScreen={setGameScreen}/>
+        <Simulator initialGameState={realGameState} setGameScreen={setGameScreen}/>
         <button style={{ position: "absolute", right: "40px", bottom: "40px" }} onClick={() => setGameScreen("programming")}> Back </button>
       </>
     );
