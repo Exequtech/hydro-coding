@@ -5,7 +5,7 @@ import Simulator from './simulator';
  
 import '@xyflow/react/dist/style.css';
 import './App.css';
-import { GameStateLvl1 } from './gameState';
+import { GameStateLvl1, GameStateLvl2 } from './gameState';
 import { nodeTypes } from './nodeTypes';
 import { EdgeData, NodeData, NodeType } from './execCode';
 
@@ -15,19 +15,46 @@ export default function App() {
   const [gameScreen, setGameScreen] = useState("level_select")
   const [nodes, setNodes] = useState<Node[]>([]);
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((eds) => applyNodeChanges(changes, eds)),
+    (changes) => {
+      for(let change of changes) {
+        if(change.type === 'remove')
+          delete nodeState.current[change.id];
+      }
+
+      setNodes((eds) => applyNodeChanges(changes, eds));
+    },
     [setNodes]
   );
   const [completedLevels, setCompletedLevels] = useState<{[levelnum: number]: boolean}>({});
-  let [level, setLevel] = useState(0);
+  const [level, setLevel] = useState(0);
   const [edges, setEdges] = useState<Edge[]>([]);
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    (changes) => {
+      console.log(changes);
+      const removals = changes.filter(x => x.type === 'remove').map(x => x.id);
+      const additions = changes.filter(x => x.type === 'add').map((x): EdgeData => {
+        return {
+            id: x.item.id,
+            from: x.item.source,
+            to: x.item.target,
+            fromHandle: x.item.sourceHandle ?? '',
+            toHandle: x.item.targetHandle ?? '',
+        };
+      });
+      if(removals.length != 0 || additions.length != 0)
+        edgeState.current = [
+          ...edgeState.current.filter(x => !removals.includes(x.id)),
+          ...additions,
+        ];
+
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
     [setEdges]
   );
   
   const levels = [
     (real: boolean, code?: CodeGraph) => GameStateLvl1(12, real, code),
+    (real: boolean, code?: CodeGraph) => GameStateLvl2(12, real, code),
   ];
 
   const previewGameState = levels[level](false);
@@ -64,13 +91,25 @@ export default function App() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      edgeState.current.push({
-        from: connection.source,
-        to: connection.target,
-        fromHandle: connection.sourceHandle ?? '',
-        toHandle: connection.targetHandle ?? '',
+      setEdges((eds) => {
+        const newEdges = addEdge(connection, eds);
+        const edge = newEdges.find(x => x.source === connection.source && x.sourceHandle === connection.sourceHandle && x.target === connection.target && x.targetHandle === connection.targetHandle);
+        if(!edge)
+          throw new Error('Added edge does not exist (impossible!)');
+      
+        edgeState.current = [
+          ...edgeState.current.filter(x => x.id != edge.id),
+          {
+            id: edge.id,
+            from: edge.source,
+            to: edge.target,
+            fromHandle: edge.sourceHandle ?? '',
+            toHandle: edge.targetHandle ?? '',
+          }
+        ];
+
+        return addEdge(connection, eds);
       });
-      setEdges((eds) => addEdge(connection, eds));
     },
     [setEdges],
   );
@@ -99,7 +138,7 @@ export default function App() {
                 if(i === 0)
                   disabled = false;
                 else
-                  disabled = completedLevels[i-1] ?? true;
+                  disabled = !!!completedLevels[i-1];
                 ret.push(<button onClick={() => {
                   setGameScreen("programming");
                   setLevel(i);
@@ -141,14 +180,14 @@ export default function App() {
           }}> Calculate </button>
         </div>
         <div style={{ position: "absolute", left: "50vw", width: "50vw", height: "100vh", top: "0vh" }}>
-          <Simulator initialGameState={previewGameState} setGameScreen={setGameScreen}/>
+          <Simulator initialGameState={previewGameState} setGameScreen={setGameScreen} real={false}/>
         </div>
       </>
     );
   } else {
     return (
       <>
-        <Simulator initialGameState={realGameState} setGameScreen={setGameScreen}/>
+        <Simulator initialGameState={realGameState} setGameScreen={setGameScreen} real={true}/>
         <button style={{ position: "absolute", right: "40px", bottom: "40px" }} onClick={() => setGameScreen("programming")}> Back </button>
       </>
     );

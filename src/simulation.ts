@@ -1,7 +1,7 @@
 import { Noise } from "noisejs";
 import { ApplyHeatpoints, GetEffectiveRadius, RayIntersectsBox } from "./math";
 import Vec2 from "./Vec2";
-import { GameState, Simulation } from "./gameState";
+import { GameState, HeatPoint, Simulation } from "./gameState";
 
 export function FarmIncome(coinRate: number, scoreRate: number): Simulation {
   return (prev: GameState): GameState => {
@@ -80,7 +80,7 @@ export function HeatPoints(spawner: HeatPointSpawner | null = null, frequency = 
     let newHeatPoints = prev.heatPoints.filter(x => {
       if(x.source == 'controller') return true;
 
-      const effectiveRadius = -Math.log(minEffect / (x.strength ?? 0)) / decayRate;
+      const effectiveRadius = -Math.log(Math.abs(minEffect / (x.strength ?? 0))) / decayRate;
       const boxMin = new Vec2(0, 0), boxMax = simDimensions;
       const perd = new Vec2(-x.vel.y, x.vel.x).Mult(effectiveRadius);
       return RayIntersectsBox(x.pos.Sub(x.vel.Mult(effectiveRadius)), x.vel, boxMin, boxMax) ||
@@ -102,11 +102,11 @@ export function HeatPoints(spawner: HeatPointSpawner | null = null, frequency = 
       let spawnPosition = pos
       while((spawnPosition.x > 0 && spawnPosition.x < simDimensions.x) && (spawnPosition.y > 0 && spawnPosition.y < simDimensions.y))
         spawnPosition = spawnPosition.Sub(prev.wind);
-      const heatPoint = {
-        vel,
-        source: 'random',
+      const heatPoint: HeatPoint = {
         pos,
         strength,
+        source: 'random',
+        vel,
       };
       newHeatPoints.push(heatPoint);
       console.log("Heatpoint spawned: ", heatPoint);

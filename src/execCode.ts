@@ -23,6 +23,7 @@ export type NodeData = {
 };
 
 export type EdgeData = {
+  id: string
   from: string
   to: string
   fromHandle: string
@@ -72,12 +73,13 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
 
       const pos: Vec2 = sensor.pos.Add(new Vec2(0.5, 0.5)).Mult(gameState.simulationResolution).Floor();
       
-      let max = -Infinity
+      let max = 21;
       for(let i = 0; i < gameState.temp.length; i++)
         for(let j = 0; j < gameState.temp[i].length; j++)
-          if(pos.Sub(new Vec2(j, i)).SqrLength() < sensor.data.radius**2 && gameState.temp[i][j] > max)
+          if(pos.Sub(new Vec2(j, i)).SqrLength() < sensor.data.radius**2 && Math.abs(gameState.temp[i][j] - 21) > Math.abs(max - 21))
             max = gameState.temp[i][j];
 
+      console.log('sensor reading: ', max);
       edges.filter(x => x.from == nodeId).forEach(x => signals.push({
         value: max,
         from: nodeId,
@@ -110,6 +112,7 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
         });
       }
     }
+
     // console.log('after literal spawning: ', [...signals]);
     if(deepEqual(signals, priorSignals))
       break;
@@ -183,7 +186,7 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
             return !gridPos.Equals(controller.pos);
           });
 
-          if(activationInput.value === 1)
+          if(activationInput.value >= 1)
           {
             console.log(`Have to trigger controller at index ${node.id}:`, activationInput.value);
             next.heatPoints = [
@@ -204,5 +207,6 @@ export default function ApplyGraph(nodes: {[key: string]: NodeData}, edges: Edge
     // console.log('after propagation: ', [...signals]);
   }
 
+  console.log('returning');
   return next;
 }

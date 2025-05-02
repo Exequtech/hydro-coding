@@ -53,7 +53,7 @@ export function Lerp(num: number, points: [number,number][]) {
   return points[points.length-1][1]
 }
 
-export function FullFreeze(object: object): void {
+export function FullFreeze(object: any): void {
   Object.freeze(object);
   for(let key in object) {
     const val = object[key];
@@ -82,7 +82,7 @@ export function RayIntersectsBox(Origin: Vec2, Direction: Vec2, BoxMin: Vec2, Bo
 export function GetEffectiveRadius(heatPoint: HeatPoint, minEffect: number, decayRate: number) {
   switch(heatPoint.source) {
     case 'random':
-      return -Math.log(minEffect / heatPoint.strength) / decayRate;
+      return -Math.log(Math.abs(minEffect / heatPoint.strength)) / decayRate;
     case 'controller':
       return Math.abs(heatPoint.strength);
     default:
@@ -104,10 +104,15 @@ export function ApplyHeatpoints(heatPoints: HeatPoint[], coord: Vec2, val: numbe
   if(sorted.controller) sorted.controller.forEach(x => {
     if(x.pos.Sub(coord).SqrLength() > x.strength ** 2)
       return;
-    if(x.strength < 0 && ret < 18)
+
+    if(ret < 18)
       ret = 18;
-    if(x.strength > 0 && ret > 24)
+    if(ret > 24)
       ret = 24;
+    // if(x.strength < 0 && ret < 18)
+      // ret = 18;
+    // if(x.strength > 0 && ret > 24)
+      // ret = 24;
   });
 
   return ret;

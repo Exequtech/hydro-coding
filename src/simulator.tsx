@@ -8,8 +8,9 @@ import { Clone, GameState } from './gameState';
 export type SimulatorProps = {
   initialGameState: GameState
   setGameScreen: React.Dispatch<any>
+  real: boolean
 }
-export default function Simulator({initialGameState, setGameScreen}: SimulatorProps) {
+export default function Simulator({initialGameState, setGameScreen, real}: SimulatorProps) {
   const [gameState, setGameState] = useState(initialGameState);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState(Vec2.zero());
@@ -90,8 +91,6 @@ export default function Simulator({initialGameState, setGameScreen}: SimulatorPr
     }
   }, [])
 
-  
-
   return (
     <>
       <div style={{ position: "absolute", width: "100%", height: "100%", left: "0%", top: "0%" }} ref={containerRef}>
@@ -100,7 +99,9 @@ export default function Simulator({initialGameState, setGameScreen}: SimulatorPr
           viewBox={`0 0 ${svgViewport.x} ${svgViewport.y}`}>
           <rect width={svgViewport.x} height={svgViewport.y} fill="lightblue"/>
         </svg>
+        {real ?
         <p style={{ position: "absolute", top: "1%", right: "1%", backgroundColor: "Canvas", border: "1px solid CanvasText", borderRadius:3, padding: "5px 10px" }}> Score: {gameState.score.toFixed(2)} / {gameState.targetScore} <br/> Coins: {gameState.coins.toFixed(2)} </p>
+        : null}
         <WaterAnimation simOffset={gameState.simOffset} columns={columns*simulationResolution} rows={rows*simulationResolution} colors={[{x:0,r:100,g:100,b:100},{x:1,r:3,g:232,b:252}]} sampleScale={new Vec2(1,1).Mult(0.4)} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}}/>
         <TempDiagnosticCanvas temps={gameState.temp} rows={rows * simulationResolution} columns={columns*simulationResolution} colors={[{x:16,r:0,g:0,b:255},{x:21,r:0,g:255,b:0},{x:26,r:255,g:0,b:0}]} style={{position: 'absolute', width: `${min}px`, height: `${min}px`, left: `${gameAnchor.x}px`, top: `${gameAnchor.y}px`}} filter={(pos, _) => {
           const gameCoords = pos.Mult(1/simulationResolution).Floor();
